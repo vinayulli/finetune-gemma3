@@ -1,9 +1,11 @@
-# Gemma-3 4B • Text-to-SQL LoRA <br> <sub>Fine-tuned with [Unsloth](https://github.com/unslothai/unsloth) on the **b-mc2/sql-create-context** dataset</sub>
+# Gemma-3 4 B • Text-to-SQL LoRA  
+## Fine-tuned with [Unsloth](https://github.com/unslothai/unsloth) + TRL `SFTTrainer` on the [b-mc2/sql-create-context](https://huggingface.co/datasets/b-mc2/sql-create-context) dataset</sub>
+
 ---
 
 ## 📖 Overview
-This repository provides a **LoRA adapter** that equips Google’s instruction-tuned **Gemma-3 4 B** model with Text-to-SQL skills.  
-Training data: the open-source [**b-mc2/sql-create-context**](https://huggingface.co/datasets/b-mc2/sql-create-context) dataset (≈ 78 k NL → SQL pairs, each with full `CREATE TABLE` context).
+This repo hosts a **LoRA adapter** that endows Google’s instruction-tuned **Gemma-3 4 B** with Text-to-SQL capability.  
+Training data: the open-source **b-mc2/sql-create-context** dataset (≈ 78 k NL → SQL pairs, each with full `CREATE TABLE` context).
 
 ---
 
@@ -12,11 +14,18 @@ Training data: the open-source [**b-mc2/sql-create-context**](https://huggingfac
 | Setting | Value |
 |---------|-------|
 | Base model | `google/gemma-3-4b-it` |
-| Framework | Unsloth `v2025.5.*` |
-| Sequence length | 2 048 tokens |
-| **LoRA** | `r=64`, `α=16`, `dropout=0.05`<br>target modules: q_proj, k_proj, v_proj, o_proj, gate_proj, up_proj, down_proj |
-| Quantisation | **4-bit NF4 QLoRA** (`bitsandbytes`) |
-| Precision | **bf16** activations |
-| Optimiser | `adamw_torch_fused` |
-| Batch size | 8 sequences (no grad-accum) |
-| LR / schedule | 2
+| Frameworks | Unsloth   +  HuggingFace TRL `SFTTrainer` |
+| LoRA | `r = 8`, `α = 8`, `dropout = 0`<br>only language layers (attention + MLP) are trainable |
+| Quantisation | 4-bit NF4 QLoRA (`bitsandbytes`) |
+| Precision | bf16 activations |
+| Batch size | 2 sequences / GPU × 4 GA ⇒ 8  |
+| Steps | 1000 (≈ 1/8 epoch) |
+| Optimiser | `adamw_8bit` |
+| LR / schedule | 2 e-4 • linear • 5 warm-up steps |
+| Weight decay | 0.01 |
+| Flash-Attention 2 | Enabled |
+| Gradient-ckpt / use_cache | Disabled / `False` |
+
+Trainable parameters: **74,50,624** (~0.17 % of 4314 M).
+
+---
